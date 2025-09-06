@@ -53,16 +53,21 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
   // 서버에서 데이터 가져오기
   const fetchBoxes = async () => {
     try {
-      const response = await fetch('/api/boxes', {
+      console.log('Fetching boxes from server...', new Date().toLocaleTimeString())
+      const response = await fetch('/api/boxes?' + Date.now(), {
         cache: 'no-cache',
         headers: {
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         }
       })
       const data = await response.json()
       
+      console.log('Server response:', data)
+      
       if (data.success && data.boxes) {
         setBoxes(data.boxes)
+        console.log('Boxes updated from server:', data.boxes)
       }
     } catch (error) {
       console.error('Failed to fetch boxes:', error)
@@ -74,15 +79,19 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
   // 서버에 데이터 저장하기
   const saveBoxes = async (boxesToSave: Box[]) => {
     try {
+      console.log('Saving boxes to server...', boxesToSave)
       const response = await fetch('/api/boxes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
         },
         body: JSON.stringify({ boxes: boxesToSave }),
       })
       
       const data = await response.json()
+      console.log('Save response:', data)
+      
       if (!data.success) {
         console.error('Failed to save boxes:', data.error)
       }
@@ -96,28 +105,54 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
     fetchBoxes()
   }, [])
 
-  // 실시간 동기화 - 3초마다 서버에서 최신 데이터 가져오기
+  // 실시간 동기화 - 2초마다 서버에서 최신 데이터 가져오기
   useEffect(() => {
     if (isLoading) return
 
-    const interval = setInterval(fetchBoxes, 3000) // 3초마다 폴링
+    console.log('Starting real-time sync...')
+    let mouseSyncTimeout: NodeJS.Timeout
+    
+    const interval = setInterval(() => {
+      fetchBoxes()
+    }, 2000) // 2초마다 폴링
 
     // 탭이 포커스될 때도 동기화
     const handleFocus = () => {
+      console.log('Tab focused, syncing...')
       fetchBoxes()
     }
 
-    window.addEventListener('focus', handleFocus)
-    window.addEventListener('visibilitychange', () => {
+    const handleVisibilityChange = () => {
       if (!document.hidden) {
+        console.log('Tab became visible, syncing...')
         fetchBoxes()
       }
-    })
+    }
+
+    // 마우스 이벤트에도 동기화 (사용자가 활성 상태일 때)
+    const handleMouseMove = () => {
+      // 마우스 움직일 때마다가 아니라 100ms 디바운스
+      clearTimeout(mouseSyncTimeout)
+      mouseSyncTimeout = setTimeout(() => {
+        fetchBoxes()
+      }, 100)
+    }
+
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('click', handleFocus)
+    window.addEventListener('keydown', handleFocus)
 
     return () => {
+      console.log('Stopping real-time sync...')
       clearInterval(interval)
+      clearTimeout(mouseSyncTimeout)
       window.removeEventListener('focus', handleFocus)
-      window.removeEventListener('visibilitychange', handleFocus)
+      window.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('click', handleFocus)
+      window.removeEventListener('keydown', handleFocus)
     }
   }, [isLoading])
 

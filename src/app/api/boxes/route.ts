@@ -1,51 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'boxes.json')
-
-// 초기 데이터
-const initialBoxes = Array.from({ length: 10 }, (_, index) => ({
+// 메모리 기반 데이터 저장 (서버 재시작 시에만 초기화)
+let boxesData = Array.from({ length: 10 }, (_, index) => ({
   id: `1-${index + 1}`,
   number: index + 1,
   status: 'waiting'
 }))
 
-// 데이터 파일 초기화
-async function ensureDataFile() {
-  const dataDir = path.join(process.cwd(), 'data')
-  
-  try {
-    await fs.access(dataDir)
-  } catch {
-    await fs.mkdir(dataDir, { recursive: true })
-  }
-
-  try {
-    await fs.access(DATA_FILE)
-  } catch {
-    await fs.writeFile(DATA_FILE, JSON.stringify(initialBoxes, null, 2))
-  }
-}
+let lastUpdateTime = Date.now()
 
 // GET: 박스 데이터 조회
 export async function GET() {
   try {
-    await ensureDataFile()
-    const data = await fs.readFile(DATA_FILE, 'utf8')
-    const boxes = JSON.parse(data)
-    
     return NextResponse.json({ 
       success: true, 
-      boxes,
-      timestamp: Date.now()
+      boxes: boxesData,
+      timestamp: lastUpdateTime,
+      server_time: Date.now()
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     })
   } catch (error) {
     console.error('Error reading boxes:', error)
     return NextResponse.json({ 
       success: false, 
       error: 'Failed to read boxes',
-      boxes: initialBoxes
+      boxes: boxesData
     }, { status: 500 })
   }
 }
@@ -53,7 +37,6 @@ export async function GET() {
 // POST: 박스 데이터 업데이트
 export async function POST(request: NextRequest) {
   try {
-    await ensureDataFile()
     const { boxes } = await request.json()
     
     if (!Array.isArray(boxes)) {
@@ -63,12 +46,20 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    await fs.writeFile(DATA_FILE, JSON.stringify(boxes, null, 2))
+    // 메모리에서 직접 업데이트
+    boxesData = boxes
+    lastUpdateTime = Date.now()
+    
+    console.log('Boxes updated at:', new Date().toISOString(), boxes)
     
     return NextResponse.json({ 
       success: true, 
       message: 'Boxes updated successfully',
-      timestamp: Date.now()
+      timestamp: lastUpdateTime
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
     })
   } catch (error) {
     console.error('Error updating boxes:', error)
@@ -82,13 +73,26 @@ export async function POST(request: NextRequest) {
 // DELETE: 모든 박스 초기화
 export async function DELETE() {
   try {
-    await fs.writeFile(DATA_FILE, JSON.stringify(initialBoxes, null, 2))
+    const initialBoxes = Array.from({ length: 10 }, (_, index) => ({
+      id: `1-${index + 1}`,
+      number: index + 1,
+      status: 'waiting'
+    }))
+    
+    boxesData = initialBoxes
+    lastUpdateTime = Date.now()
+    
+    console.log('All boxes reset at:', new Date().toISOString())
     
     return NextResponse.json({ 
       success: true, 
       message: 'All boxes reset successfully',
-      boxes: initialBoxes,
-      timestamp: Date.now()
+      boxes: boxesData,
+      timestamp: lastUpdateTime
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
     })
   } catch (error) {
     console.error('Error resetting boxes:', error)
