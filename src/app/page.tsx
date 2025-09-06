@@ -44,11 +44,11 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 md:gap-8">
           {boxes.map((box) => (
             <div
               key={box.id}
-              className={`bg-white rounded-xl shadow-lg p-10 hover:shadow-xl transition-all duration-300 border-2 ${
+              className={`bg-white rounded-xl shadow-lg p-4 sm:p-6 md:p-8 lg:p-10 hover:shadow-xl transition-all duration-300 border-2 ${
                 box.status === 'departure' ? 'border-green-500 shadow-green-500/50 shadow-lg' :
                 box.status === 'queue' ? 'border-orange-500 shadow-orange-500/50 shadow-lg' :
                 'border-gray-300 hover:border-blue-400'
@@ -56,13 +56,13 @@ export default function Home() {
             >
               <div className="text-center">
                 <div 
-                  className={`text-3xl font-bold mb-4 px-4 py-2 rounded-xl border-2 transition-all duration-200 ${
+                  className={`text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold mb-2 sm:mb-3 md:mb-4 px-2 sm:px-3 md:px-3 py-1 sm:py-2 md:py-2 rounded-xl border-2 transition-all duration-200 ${
                     getStatusClasses(box.status)
                   }`}
                 >
                   {box.id}
                 </div>
-                <div className={`text-lg font-semibold ${
+                <div className={`text-sm sm:text-base md:text-lg font-semibold ${
                   box.status === 'departure' ? 'text-green-700' :
                   box.status === 'waiting' ? 'text-gray-700' :
                   box.status === 'queue' ? 'text-orange-700' :

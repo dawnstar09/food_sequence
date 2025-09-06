@@ -127,7 +127,8 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
 
     // 짧은 로딩 효과를 위한 지연
     setTimeout(() => {
-      const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD
+      // 관리자 비밀번호 (페이지에서만 숨김)
+      const adminPassword = 'dlwotjd53'
       
       if (password === adminPassword) {
         // 로그인 성공 - 실패 기록 초기화
