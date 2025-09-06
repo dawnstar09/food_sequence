@@ -22,13 +22,13 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <main className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
             급식 순서 현황 페이지
           </h1>
-          <div className="space-x-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             <NavigationButton
               variant="primary"
               href="/meals"
@@ -44,11 +44,11 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 md:gap-8">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
           {boxes.map((box) => (
             <div
               key={box.id}
-              className={`bg-white rounded-xl shadow-lg p-4 sm:p-6 md:p-8 lg:p-10 hover:shadow-xl transition-all duration-300 border-2 ${
+              className={`bg-white rounded-lg shadow-md p-3 sm:p-4 md:p-5 hover:shadow-lg transition-all duration-300 border-2 ${
                 box.status === 'departure' ? 'border-green-500 shadow-green-500/50 shadow-lg' :
                 box.status === 'queue' ? 'border-orange-500 shadow-orange-500/50 shadow-lg' :
                 'border-gray-300 hover:border-blue-400'
@@ -56,13 +56,13 @@ export default function Home() {
             >
               <div className="text-center">
                 <div 
-                  className={`text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold mb-2 sm:mb-3 md:mb-4 px-2 sm:px-3 md:px-3 py-1 sm:py-2 md:py-2 rounded-xl border-2 transition-all duration-200 ${
+                  className={`text-base sm:text-lg md:text-xl font-bold mb-2 px-2 py-1 rounded-lg border-2 transition-all duration-200 ${
                     getStatusClasses(box.status)
                   }`}
                 >
                   {box.id}
                 </div>
-                <div className={`text-sm sm:text-base md:text-lg font-semibold ${
+                <div className={`text-xs sm:text-sm md:text-base font-semibold ${
                   box.status === 'departure' ? 'text-green-700' :
                   box.status === 'waiting' ? 'text-gray-700' :
                   box.status === 'queue' ? 'text-orange-700' :
