@@ -22,6 +22,7 @@ interface BoxContextType {
   statuses: Record<BoxStatus, StatusInfo>
   updateBox: (id: string, updates: Partial<Box>) => void
   resetAll: () => void
+  isLoading: boolean
 }
 
 const BoxContext = createContext<BoxContextType | undefined>(undefined)
@@ -47,53 +48,78 @@ const initialBoxes: Box[] = Array.from({ length: 10 }, (_, index) => ({
 
 export const BoxProvider = ({ children }: BoxProviderProps) => {
   const [boxes, setBoxes] = useState<Box[]>(initialBoxes)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // 컴포넌트 마운트 시 localStorage에서 데이터 로드
-  useEffect(() => {
-    const savedBoxes = localStorage.getItem('food-sequence-boxes')
-    if (savedBoxes) {
-      try {
-        const parsedBoxes = JSON.parse(savedBoxes)
-        setBoxes(parsedBoxes)
-      } catch (error) {
-        console.error('Failed to parse saved boxes:', error)
-        // 파싱 실패 시 초기 데이터 사용
-        localStorage.setItem('food-sequence-boxes', JSON.stringify(initialBoxes))
+  // 서버에서 데이터 가져오기
+  const fetchBoxes = async () => {
+    try {
+      const response = await fetch('/api/boxes', {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+      const data = await response.json()
+      
+      if (data.success && data.boxes) {
+        setBoxes(data.boxes)
       }
-    } else {
-      // 저장된 데이터가 없으면 초기 데이터 저장
-      localStorage.setItem('food-sequence-boxes', JSON.stringify(initialBoxes))
+    } catch (error) {
+      console.error('Failed to fetch boxes:', error)
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  // 서버에 데이터 저장하기
+  const saveBoxes = async (boxesToSave: Box[]) => {
+    try {
+      const response = await fetch('/api/boxes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ boxes: boxesToSave }),
+      })
+      
+      const data = await response.json()
+      if (!data.success) {
+        console.error('Failed to save boxes:', data.error)
+      }
+    } catch (error) {
+      console.error('Error saving boxes:', error)
+    }
+  }
+
+  // 컴포넌트 마운트 시 서버에서 데이터 로드
+  useEffect(() => {
+    fetchBoxes()
   }, [])
 
-  // 다른 탭/창에서의 변경사항 실시간 동기화
+  // 실시간 동기화 - 3초마다 서버에서 최신 데이터 가져오기
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'food-sequence-boxes' && e.newValue) {
-        try {
-          const updatedBoxes = JSON.parse(e.newValue)
-          setBoxes(updatedBoxes)
-        } catch (error) {
-          console.error('Failed to sync boxes from storage:', error)
-        }
-      }
+    if (isLoading) return
+
+    const interval = setInterval(fetchBoxes, 3000) // 3초마다 폴링
+
+    // 탭이 포커스될 때도 동기화
+    const handleFocus = () => {
+      fetchBoxes()
     }
 
-    // 사용자 정의 이벤트로 같은 탭에서의 변경사항도 감지
-    const handleCustomSync = (e: CustomEvent) => {
-      if (e.detail && e.detail.boxes) {
-        setBoxes(e.detail.boxes)
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        fetchBoxes()
       }
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    window.addEventListener('boxes-updated' as any, handleCustomSync)
+    })
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('boxes-updated' as any, handleCustomSync)
+      clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('visibilitychange', handleFocus)
     }
-  }, [])
+  }, [isLoading])
 
   const statuses: Record<BoxStatus, StatusInfo> = {
     departure: {
@@ -128,33 +154,34 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
         box.id === id ? { ...box, ...updates } : box
       )
       
-      // localStorage에 저장
-      localStorage.setItem('food-sequence-boxes', JSON.stringify(updatedBoxes))
+      // 서버에 즉시 저장
+      saveBoxes(updatedBoxes)
       
-      // 같은 탭의 다른 컴포넌트들에게 업데이트 알림
-      window.dispatchEvent(new CustomEvent('boxes-updated', {
-        detail: { boxes: updatedBoxes }
-      }))
-      
+      console.log('Box updated:', id, updates) // 디버깅용
       return updatedBoxes
     })
   }
 
-  const resetAll = () => {
-    const resetBoxes = initialBoxes.map(box => ({ ...box }))
-    setBoxes(resetBoxes)
-    
-    // localStorage에 저장
-    localStorage.setItem('food-sequence-boxes', JSON.stringify(resetBoxes))
-    
-    // 같은 탭의 다른 컴포넌트들에게 업데이트 알림
-    window.dispatchEvent(new CustomEvent('boxes-updated', {
-      detail: { boxes: resetBoxes }
-    }))
+  const resetAll = async () => {
+    try {
+      const response = await fetch('/api/boxes', {
+        method: 'DELETE',
+      })
+      
+      const data = await response.json()
+      if (data.success && data.boxes) {
+        setBoxes(data.boxes)
+        console.log('All boxes reset') // 디버깅용
+      }
+    } catch (error) {
+      console.error('Failed to reset boxes:', error)
+      // 에러 시 로컬에서라도 초기화
+      setBoxes(initialBoxes)
+    }
   }
 
   return (
-    <BoxContext.Provider value={{ boxes, statuses, updateBox, resetAll }}>
+    <BoxContext.Provider value={{ boxes, statuses, updateBox, resetAll, isLoading }}>
       {children}
     </BoxContext.Provider>
   )
