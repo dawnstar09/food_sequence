@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     
     // SSE로 모든 클라이언트에게 실시간 업데이트 전송
     try {
-      const { broadcastToClients } = await import('../events/route')
+      const { broadcastToClients } = await import('@/lib/sse-broadcast')
       await broadcastToClients({
         type: 'boxes-updated',
         boxes: boxesData,
@@ -128,7 +128,7 @@ export async function DELETE() {
     
     // SSE로 모든 클라이언트에게 리셋 알림
     try {
-      const { broadcastToClients } = await import('../events/route')
+      const { broadcastToClients } = await import('@/lib/sse-broadcast')
       await broadcastToClients({
         type: 'boxes-updated',
         boxes: boxesData,

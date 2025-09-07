@@ -45,6 +45,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     }, 60000) // 1분마다
 
     return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockedUntil])
 
   const checkBlockStatus = () => {
@@ -159,7 +160,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     }
   }
 
-  const formatTimeRemaining = () => {
+  const formatTimeRemaining = useCallback(() => {
     if (!blockedUntil) return ''
     
     const now = new Date()
@@ -175,7 +176,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     } else {
       return `${minutes}분`
     }
-  }
+  }, [blockedUntil])
 
   return (
     <>

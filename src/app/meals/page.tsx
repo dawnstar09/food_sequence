@@ -17,6 +17,7 @@ export default function MealsPage() {
 
   useEffect(() => {
     loadMealsData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const getThisWeekDates = () => {
@@ -34,7 +35,7 @@ export default function MealsPage() {
     return dates
   }
 
-  const loadMealsData = async () => {
+  const loadMealsData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -133,7 +134,7 @@ export default function MealsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])  // useCallback 종료
 
   const isToday = (dateString: string) => {
     const today = new Date().toISOString().split('T')[0]

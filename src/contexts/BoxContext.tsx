@@ -23,6 +23,7 @@ interface BoxContextType {
   boxes: Box[]
   statuses: Record<BoxStatus, StatusInfo>
   updateBox: (id: string, updates: Partial<Box>) => void
+  updateBoxAdmin: (id: string, updates: Partial<Box>) => void  // 관리자 전용 업데이트
   resetAll: () => void
   isLoading: boolean
 }
@@ -196,16 +197,35 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
     }
   }
 
+  // 일반 사용자용 - 로컬 상태만 변경 (서버 저장 안함)
   const updateBox = (id: string, updates: Partial<Box>) => {
     setBoxes(prev => {
       const updatedBoxes = prev.map(box => 
         box.id === id ? { ...box, ...updates } : box
       )
       
-      // 서버에 즉시 저장
+      console.log('Box updated locally only:', id, updates)
+      return updatedBoxes
+    })
+  }
+
+  // 관리자용 - 서버에 저장 + 관리자 마킹
+  const updateBoxAdmin = (id: string, updates: Partial<Box>) => {
+    const adminUpdates = {
+      ...updates,
+      lastModifiedBy: 'admin',
+      lastModified: Date.now()
+    }
+    
+    setBoxes(prev => {
+      const updatedBoxes = prev.map(box => 
+        box.id === id ? { ...box, ...adminUpdates } : box
+      )
+      
+      // 관리자 변경사항만 서버에 저장
       saveBoxes(updatedBoxes)
       
-      console.log('Box updated:', id, updates) // 디버깅용
+      console.log('🔧 Admin box update saved to server:', id, adminUpdates)
       return updatedBoxes
     })
   }
@@ -244,7 +264,7 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
   }
 
   return (
-    <BoxContext.Provider value={{ boxes, statuses, updateBox, resetAll, isLoading }}>
+    <BoxContext.Provider value={{ boxes, statuses, updateBox, updateBoxAdmin, resetAll, isLoading }}>
       {children}
     </BoxContext.Provider>
   )
