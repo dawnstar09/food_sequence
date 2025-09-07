@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { addClient, removeClient } from '@/lib/sse-broadcast'
-
+// 에러 issue 실습 브런치
 // GET: SSE 연결 설정
 export async function GET(request: NextRequest) {
   // SSE 스트림 생성
