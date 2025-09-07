@@ -19,7 +19,7 @@ export default function MealsPage() {
           </NavigationButton>
         </div>
 
-        {/* 임시 메시지 */}
+        {/* 임시 메시지(어차피 api 잘 작동해서 상관은 없음)*/}
         <div className="text-center py-12">
           <div className="text-gray-400 text-6xl mb-4">🍽️</div>
           <h3 className="text-xl font-semibold text-gray-600 mb-2">급식 정보 준비 중</h3>
