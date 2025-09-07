@@ -11,7 +11,7 @@ Next.js 구조로 React를 사용한 박스 표시 프로젝트입니다. 1-1부
 
 ## 기술 스택
 
-- Next.js 15.5.2
+- Next.js 15.5.1
 - React 18
 - TypeScript
 - Tailwind CSS
