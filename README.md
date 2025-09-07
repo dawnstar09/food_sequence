@@ -1,4 +1,4 @@
-# Food Sequence
+# Food Sequence +12334
 
 Next.js 구조로 React를 사용한 박스 표시 프로젝트입니다. 1-1부터 1-10까지의 번호가 매겨진 박스들을 그리드 형태로 표시합니다.
 
