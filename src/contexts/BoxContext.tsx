@@ -105,54 +105,32 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
     fetchBoxes()
   }, [])
 
-  // 실시간 동기화 - 2초마다 서버에서 최신 데이터 가져오기
+  // 실시간 동기화 - SSE로만 업데이트 (폴링 제거)
   useEffect(() => {
     if (isLoading) return
 
-    console.log('Starting real-time sync...')
-    let mouseSyncTimeout: NodeJS.Timeout
+    console.log('🔗 Setting up real-time sync via SSE only...')
     
-    const interval = setInterval(() => {
-      fetchBoxes()
-    }, 2000) // 2초마다 폴링
-
-    // 탭이 포커스될 때도 동기화
+    // 탭이 포커스될 때만 서버와 동기화 (필요 시에만)
     const handleFocus = () => {
-      console.log('Tab focused, syncing...')
+      console.log('📱 Tab focused, checking server state...')
       fetchBoxes()
     }
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('Tab became visible, syncing...')
+        console.log('👀 Tab became visible, checking server state...')
         fetchBoxes()
       }
     }
 
-    // 마우스 이벤트에도 동기화 (사용자가 활성 상태일 때)
-    const handleMouseMove = () => {
-      // 마우스 움직일 때마다가 아니라 100ms 디바운스
-      clearTimeout(mouseSyncTimeout)
-      mouseSyncTimeout = setTimeout(() => {
-        fetchBoxes()
-      }, 100)
-    }
-
     window.addEventListener('focus', handleFocus)
     window.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('click', handleFocus)
-    window.addEventListener('keydown', handleFocus)
 
     return () => {
-      console.log('Stopping real-time sync...')
-      clearInterval(interval)
-      clearTimeout(mouseSyncTimeout)
+      console.log('🔌 Stopping real-time sync listeners...')
       window.removeEventListener('focus', handleFocus)
       window.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('click', handleFocus)
-      window.removeEventListener('keydown', handleFocus)
     }
   }, [isLoading])
 
