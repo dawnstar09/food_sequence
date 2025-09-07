@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import NavigationButton from '@/components/NavigationButton'
+import DevToolsBlocker from '@/components/DevToolsBlocker'
 
 interface AdminLoginProps {
   onLogin: () => void
@@ -177,7 +178,9 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
   }
 
   return (
-    <main className="min-h-screen bg-gray-900 flex items-center justify-center p-8">
+    <>
+      <DevToolsBlocker />
+      <main className="min-h-screen bg-gray-900 flex items-center justify-center p-8">
       <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">관리자 로그인</h1>
@@ -286,5 +289,6 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
         )}
       </div>
     </main>
+    </>
   )
 }

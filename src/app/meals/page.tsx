@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import NavigationButton from '@/components/NavigationButton'
+import DevToolsBlocker from '@/components/DevToolsBlocker'
 import Image from 'next/image'
 
 interface MealData {
@@ -141,7 +142,9 @@ export default function MealsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+      <>
+        <DevToolsBlocker />
+        <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="text-center">
@@ -151,11 +154,14 @@ export default function MealsPage() {
           </div>
         </div>
       </main>
+      </>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+    <>
+      <DevToolsBlocker />
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-6xl mx-auto">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-8">
@@ -264,5 +270,6 @@ export default function MealsPage() {
         </div>
       </div>
     </main>
+    </>
   )
 }

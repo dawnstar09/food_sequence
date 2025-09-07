@@ -1,6 +1,8 @@
 'use client'
 
-import { useBoxContext, BoxStatus } from '@/contexts/BoxContext'
+import { useState, useEffect } from 'react'
+import { useBoxContext, BoxStatus, Box } from '@/contexts/BoxContext'
+import DevToolsBlocker from '@/components/DevToolsBlocker'
 
 interface BoxManagerProps {
   onClose: () => void
@@ -22,7 +24,9 @@ export default function BoxManager({ onClose }: BoxManagerProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <>
+      <DevToolsBlocker />
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
@@ -111,5 +115,6 @@ export default function BoxManager({ onClose }: BoxManagerProps) {
         </div>
       </div>
     </div>
+    </>
   )
 }

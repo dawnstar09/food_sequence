@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import NavigationButton from '@/components/NavigationButton'
 import BoxManager from '@/components/BoxManager'
 import AdminLogin from '@/components/AdminLogin'
+import DevToolsBlocker from '@/components/DevToolsBlocker'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -46,7 +47,9 @@ export default function AdminPage() {
   // 인증된 경우 관리자 페이지 표시
 
   return (
-    <main className="min-h-screen bg-gray-900 p-8">
+    <>
+      <DevToolsBlocker />
+      <main className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">
@@ -90,5 +93,6 @@ export default function AdminPage() {
         <BoxManager onClose={() => setShowBoxManager(false)} />
       )}
     </main>
+    </>
   )
 }
