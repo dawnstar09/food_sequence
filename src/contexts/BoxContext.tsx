@@ -8,6 +8,8 @@ export interface Box {
   id: string
   number: number
   status: BoxStatus
+  lastModifiedBy?: string  // 'admin' 또는 'user'
+  lastModified?: number    // 마지막 수정 시간 (타임스탬프)
 }
 
 export interface StatusInfo {
@@ -105,12 +107,44 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
     fetchBoxes()
   }, [])
 
-  // 실시간 동기화 - SSE로만 업데이트 (폴링 제거)
+  // 실시간 동기화 - 실제 SSE 연결 구현
   useEffect(() => {
     if (isLoading) return
 
-    console.log('🔗 Setting up real-time sync via SSE only...')
+    console.log('🔗 Setting up real-time SSE connection...')
     
+    // SSE 연결 설정
+    const eventSource = new EventSource('/api/events')
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        console.log('📡 SSE message received:', data)
+        
+        if (data.type === 'boxes-updated') {
+          // 서버에서 받은 최신 데이터로 업데이트
+          setBoxes(data.boxes)
+          console.log('📦 Boxes updated via SSE')
+        }
+      } catch (error) {
+        console.error('Error parsing SSE message:', error)
+      }
+    }
+    
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error)
+      // 연결 끊어지면 3초 후 자동 재연결
+      setTimeout(() => {
+        if (eventSource.readyState === EventSource.CLOSED) {
+          console.log('🔄 Attempting to reconnect SSE...')
+        }
+      }, 3000)
+    }
+    
+    eventSource.onopen = () => {
+      console.log('✅ SSE connection established')
+    }
+
     // 탭이 포커스될 때만 서버와 동기화 (필요 시에만)
     const handleFocus = () => {
       console.log('📱 Tab focused, checking server state...')
@@ -128,7 +162,8 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
     window.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      console.log('🔌 Stopping real-time sync listeners...')
+      console.log('🔌 Closing SSE connection and listeners...')
+      eventSource.close()
       window.removeEventListener('focus', handleFocus)
       window.removeEventListener('visibilitychange', handleVisibilityChange)
     }
@@ -177,19 +212,34 @@ export const BoxProvider = ({ children }: BoxProviderProps) => {
 
   const resetAll = async () => {
     try {
+      console.log('🔧 Admin resetting all boxes')
       const response = await fetch('/api/boxes', {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
       
       const data = await response.json()
       if (data.success && data.boxes) {
-        setBoxes(data.boxes)
-        console.log('All boxes reset') // 디버깅용
+        // 관리자 리셋 표시 추가
+        const adminResetBoxes = data.boxes.map((box: Box) => ({
+          ...box,
+          lastModifiedBy: 'admin',
+          lastModified: Date.now()
+        }))
+        setBoxes(adminResetBoxes)
+        console.log('🎯 All boxes reset by admin') 
       }
     } catch (error) {
       console.error('Failed to reset boxes:', error)
       // 에러 시 로컬에서라도 초기화
-      setBoxes(initialBoxes)
+      const adminResetBoxes = initialBoxes.map(box => ({
+        ...box,
+        lastModifiedBy: 'admin',
+        lastModified: Date.now()
+      }))
+      setBoxes(adminResetBoxes)
     }
   }
 

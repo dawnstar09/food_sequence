@@ -12,7 +12,9 @@ export default function BoxManager({ onClose }: BoxManagerProps) {
   const { boxes, statuses, updateBox, resetAll } = useBoxContext()
 
   const changeStatus = (id: string, status: BoxStatus) => {
-    updateBox(id, { status })
+    console.log(`🔧 Admin changing box ${id} to ${status}`)
+    // 관리자 변경임을 명시적으로 표시
+    updateBox(id, { status, lastModifiedBy: 'admin', lastModified: Date.now() })
   }
 
   const getStatusClasses = (status: BoxStatus) => {
