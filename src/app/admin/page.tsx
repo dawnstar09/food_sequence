@@ -2,60 +2,53 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import NavigationButton from '@/components/NavigationButton'
 import BoxManager from '@/components/BoxManager'
-import LoginSelector from '@/components/LoginSelector'
+import GoogleLogin from '@/components/GoogleLogin'
 import DevToolsBlocker from '@/components/DevToolsBlocker'
 
 export default function AdminPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [showBoxManager, setShowBoxManager] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // 페이지 로드 시 세션 확인
+  // 구글 세션 확인
   useEffect(() => {
     if (status === 'loading') return
-    
-    if (session?.user) {
-      setIsAuthenticated(true)
-      setIsLoading(false)
-      return
-    }
-    
-    const authStatus = sessionStorage.getItem('adminAuthenticated')
-    setIsAuthenticated(authStatus === 'true')
     setIsLoading(false)
-  }, [session, status])
+  }, [status])
 
   const handleLogin = () => {
-    setIsAuthenticated(true)
-    sessionStorage.setItem('adminAuthenticated', 'true')
+    // 구글 로그인 성공 시 자동으로 세션이 활성화됨
+    console.log('Google login successful')
   }
 
   const handleLogout = () => {
-    setIsAuthenticated(false)
-    sessionStorage.removeItem('adminAuthenticated')
-    if (session) {
-      // Google 로그인이면 로그아웃
-      window.location.href = '/api/auth/signout'
-    }
+    signOut({ callbackUrl: '/' })
   }
 
   // 로딩 중일 때
-  if (isLoading) {
+  if (isLoading || status === 'loading') {
     return (
-      <main className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">로딩 중...</div>
-      </main>
+      <>
+        <DevToolsBlocker />
+        <main className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <div className="text-white text-xl">인증 확인 중...</div>
+            </div>
+          </div>
+        </main>
+      </>
     )
   }
 
-  // 인증되지 않은 경우 로그인 페이지 표시
-  if (!isAuthenticated) {
-    return <LoginSelector onLogin={handleLogin} />
+  // 구글 로그인되지 않은 경우 로그인 페이지 표시
+  if (!session?.user) {
+    return <GoogleLogin onLogin={handleLogin} />
   }
 
   // 인증된 경우 관리자 페이지 표시
@@ -65,10 +58,16 @@ export default function AdminPage() {
       <DevToolsBlocker />
       <main className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">
-            관리자 페이지
-          </h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              관리자 페이지
+            </h1>
+            <div className="text-gray-300">
+              <p className="mb-1">환영합니다, <span className="text-blue-400 font-semibold">{session.user.name}</span>님</p>
+              <p className="text-sm text-gray-400">{session.user.email}</p>
+            </div>
+          </div>
           <div className="space-x-4">
             <NavigationButton
               variant="danger"
