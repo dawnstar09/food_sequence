@@ -19,6 +19,27 @@ Next.js 구조로 React를 사용한 박스 표시 프로젝트입니다. 1-1부
 
 ## 시작하기
 
+### 환경변수 설정
+
+1. `.env.example` 파일을 참고하여 `.env.local` 파일을 생성하세요:
+```bash
+cp .env.example .env.local
+```
+
+2. `.env.local` 파일에서 실제 값들을 설정하세요:
+```env
+# 관리자 페이지 비밀번호
+NEXT_PUBLIC_ADMIN_PASSWORD=your_admin_password_here
+```
+
+### Vercel 배포 시 환경변수 설정
+
+Vercel 대시보드에서 다음 환경변수를 설정해야 합니다:
+
+- **Variable Name**: `NEXT_PUBLIC_ADMIN_PASSWORD`
+- **Value**: 실제 관리자 비밀번호
+- **Environment**: Production, Preview, Development 모두 체크
+
 ### 개발 서버 실행
 
 ```bash
