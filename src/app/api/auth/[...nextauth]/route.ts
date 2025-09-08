@@ -16,18 +16,18 @@ const handler = NextAuth({
     async signIn({ user, account, profile }) {
       console.log('🔐 Login attempt:', { email: user.email, name: user.name })
       
-      // 특정 관리자 이메일만 허용
-      const allowedEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || []
+      // 대전대신고등학교 허용 이메일 체크
+      const allowedEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || ['25_lmj0701@dshs.kr']
       
       console.log('✅ Allowed emails:', allowedEmails)
       
       if (user.email && allowedEmails.includes(user.email)) {
-        console.log('✅ Access granted for:', user.email)
+        console.log('✅ 대전대신고등학교 관리자 접근 허용:', user.email)
         return true
       }
       
       // 허용되지 않은 이메일
-      console.log('❌ Access denied for:', user.email)
+      console.log('❌ 접근 거부 - 허용되지 않은 계정:', user.email)
       return false
     },
     async session({ session, token }) {

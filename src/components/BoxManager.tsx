@@ -9,11 +9,11 @@ interface BoxManagerProps {
 }
 
 export default function BoxManager({ onClose }: BoxManagerProps) {
-  const { boxes, statuses, updateBoxAdmin, resetAll } = useBoxContext()
+  const { boxes, statuses, updateBoxAdmin, resetAll, error } = useBoxContext()
 
   const changeStatus = (id: string, status: BoxStatus) => {
-    console.log(`🔧 Admin changing box ${id} to ${status}`)
-    // 관리자 전용 함수 사용 (자동으로 lastModifiedBy: 'admin' 추가됨)
+    console.log(`🔧 Admin changing box ${id} to ${status} via Firebase`)
+    // Firebase를 통한 관리자 전용 업데이트
     updateBoxAdmin(id, { status })
   }
 
@@ -48,6 +48,16 @@ export default function BoxManager({ onClose }: BoxManagerProps) {
               </button>
             </div>
           </div>
+          
+          {/* 시스템 에러 표시 */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+              <div className="flex items-center">
+                <span className="font-semibold">시스템 에러:</span>
+                <span className="ml-2">{error}</span>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {boxes.map((box) => (
