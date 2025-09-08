@@ -30,7 +30,31 @@ cp .env.example .env.local
 ```env
 # 관리자 페이지 비밀번호
 NEXT_PUBLIC_ADMIN_PASSWORD=your_admin_password_here
+
+# NextAuth.js 설정
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret_here
+
+# Google OAuth 설정 (선택사항)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# 허용된 관리자 이메일 (구글 로그인용)
+ADMIN_EMAILS=admin@example.com,manager@example.com
 ```
+
+### Google OAuth 설정 (선택사항)
+
+구글 로그인을 사용하려면 Google Cloud Console에서 OAuth 2.0 클라이언트를 설정해야 합니다:
+
+1. [Google Cloud Console](https://console.cloud.google.com/) 접속
+2. 새 프로젝트 생성 또는 기존 프로젝트 선택
+3. "APIs & Services" → "Credentials" 이동
+4. "Create Credentials" → "OAuth 2.0 Client IDs" 선택
+5. 승인된 리디렉션 URI 추가:
+   - `http://localhost:3000/api/auth/callback/google` (개발)
+   - `https://your-domain.vercel.app/api/auth/callback/google` (배포)
+6. 클라이언트 ID와 시크릿을 `.env.local`에 추가
 
 ### Vercel 배포 시 환경변수 설정
 

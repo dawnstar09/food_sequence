@@ -2,23 +2,33 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import NavigationButton from '@/components/NavigationButton'
 import BoxManager from '@/components/BoxManager'
-import AdminLogin from '@/components/AdminLogin'
+import LoginSelector from '@/components/LoginSelector'
 import DevToolsBlocker from '@/components/DevToolsBlocker'
 
 export default function AdminPage() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [showBoxManager, setShowBoxManager] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   // 페이지 로드 시 세션 확인
   useEffect(() => {
+    if (status === 'loading') return
+    
+    if (session?.user) {
+      setIsAuthenticated(true)
+      setIsLoading(false)
+      return
+    }
+    
     const authStatus = sessionStorage.getItem('adminAuthenticated')
     setIsAuthenticated(authStatus === 'true')
     setIsLoading(false)
-  }, [])
+  }, [session, status])
 
   const handleLogin = () => {
     setIsAuthenticated(true)
@@ -28,6 +38,10 @@ export default function AdminPage() {
   const handleLogout = () => {
     setIsAuthenticated(false)
     sessionStorage.removeItem('adminAuthenticated')
+    if (session) {
+      // Google 로그인이면 로그아웃
+      window.location.href = '/api/auth/signout'
+    }
   }
 
   // 로딩 중일 때
@@ -41,7 +55,7 @@ export default function AdminPage() {
 
   // 인증되지 않은 경우 로그인 페이지 표시
   if (!isAuthenticated) {
-    return <AdminLogin onLogin={handleLogin} />
+    return <LoginSelector onLogin={handleLogin} />
   }
 
   // 인증된 경우 관리자 페이지 표시
