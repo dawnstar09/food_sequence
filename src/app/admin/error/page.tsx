@@ -2,8 +2,9 @@
 
 import { useSearchParams } from 'next/navigation'
 import NavigationButton from '@/components/NavigationButton'
+import { Suspense } from 'react'
 
-export default function AuthError() {
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
 
@@ -81,5 +82,17 @@ export default function AuthError() {
         )}
       </div>
     </main>
+  )
+}
+
+export default function AuthError() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">로딩 중...</div>
+      </main>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   )
 }
