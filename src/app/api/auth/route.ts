@@ -1,16 +1,21 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-// 서버 사이드에서만 접근 가능한 패스워드
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD!
-const JWT_SECRET = process.env.JWT_SECRET!
+// 환경변수 가져오기 함수
+function getEnvVars() {
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+  const JWT_SECRET = process.env.JWT_SECRET
 
-if (!ADMIN_PASSWORD || !JWT_SECRET) {
-  throw new Error('환경변수 ADMIN_PASSWORD와 JWT_SECRET이 설정되지 않았습니다')
+  if (!ADMIN_PASSWORD || !JWT_SECRET) {
+    throw new Error('환경변수 ADMIN_PASSWORD와 JWT_SECRET이 설정되지 않았습니다')
+  }
+
+  return { ADMIN_PASSWORD, JWT_SECRET }
 }
 
 // 간단한 JWT 토큰 생성
 function generateToken(payload: any) {
+  const { JWT_SECRET } = getEnvVars()
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url')
   const signature = crypto
@@ -24,6 +29,7 @@ function generateToken(payload: any) {
 // JWT 토큰 검증
 function verifyToken(token: string) {
   try {
+    const { JWT_SECRET } = getEnvVars()
     const [header, payload, signature] = token.split('.')
     const expectedSignature = crypto
       .createHmac('sha256', JWT_SECRET)
@@ -50,6 +56,7 @@ function verifyToken(token: string) {
 export async function POST(request: Request) {
   try {
     const { password } = await request.json()
+    const { ADMIN_PASSWORD } = getEnvVars()
     
     console.log('🔐 Admin login attempt')
     
