@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import NavigationButton from '@/components/NavigationButton'
 import BoxManager from '@/components/BoxManager'
 import DevToolsBlocker from '@/components/DevToolsBlocker'
@@ -9,29 +9,89 @@ import { useBoxContext } from '@/contexts/BoxContext'
 export default function AdminPage() {
   const { error } = useBoxContext()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [password, setPassword] = useState('')
   const [showBoxManager, setShowBoxManager] = useState(false)
   const [authError, setAuthError] = useState('')
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD
-    
-    if (password === adminPassword) {
-      setIsAuthenticated(true)
-      setAuthError('')
-      console.log('✅ 관리자 인증 성공')
-    } else {
-      setAuthError('패스워드가 올바르지 않습니다.')
-      console.log('❌ 관리자 인증 실패')
+  // 페이지 로드 시 인증 상태 확인
+  useEffect(() => {
+    checkAuthStatus()
+  }, [])
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      const data = await response.json()
+      
+      setIsAuthenticated(data.authenticated || false)
+    } catch (error) {
+      console.error('Auth check failed:', error)
+      setIsAuthenticated(false)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleLogout = () => {
-    setIsAuthenticated(false)
-    setPassword('')
-    setShowBoxManager(false)
-    console.log('👋 관리자 로그아웃')
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAuthError('')
+    
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ password })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setIsAuthenticated(true)
+        setPassword('')
+        console.log('✅ 관리자 인증 성공 (서버 검증)')
+      } else {
+        setAuthError(data.error || '인증에 실패했습니다.')
+        console.log('❌ 관리자 인증 실패 (서버 검증)')
+      }
+    } catch (error) {
+      setAuthError('서버 연결 오류가 발생했습니다.')
+      console.error('Login error:', error)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth', {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      
+      setIsAuthenticated(false)
+      setPassword('')
+      setShowBoxManager(false)
+      console.log('👋 관리자 로그아웃 (서버 처리)')
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
+
+  // 로딩 중
+  if (isLoading) {
+    return (
+      <>
+        <DevToolsBlocker />
+        <main className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <div className="text-white text-xl">인증 확인 중...</div>
+        </main>
+      </>
+    )
   }
 
   // 인증되지 않은 경우 로그인 폼 표시
@@ -43,10 +103,13 @@ export default function AdminPage() {
           <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full">
             <div className="text-center mb-6">
               <h1 className="text-3xl font-bold text-white mb-2">
-                🔐 관리자 로그인
+                🔒 보안 관리자 로그인
               </h1>
               <p className="text-gray-400">
                 급식 순서 관리 시스템
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                서버 사이드 인증 보안 적용
               </p>
             </div>
 
@@ -62,6 +125,7 @@ export default function AdminPage() {
                   className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
                   placeholder="패스워드를 입력하세요"
                   required
+                  autoComplete="current-password"
                 />
               </div>
 
@@ -87,6 +151,11 @@ export default function AdminPage() {
                 홈으로 돌아가기
               </NavigationButton>
             </div>
+
+            <div className="mt-4 text-xs text-gray-500 text-center">
+              🔐 JWT 토큰 기반 보안 인증<br/>
+              🍪 HttpOnly 쿠키 세션 관리
+            </div>
           </div>
         </main>
       </>
@@ -102,11 +171,12 @@ export default function AdminPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">
-                관리자 페이지
+                🔒 보안 관리자 페이지
               </h1>
               <div className="text-gray-300">
-                <p className="mb-1">환영합니다, <span className="text-blue-400 font-semibold">관리자</span>님</p>
+                <p className="mb-1">환영합니다, <span className="text-green-400 font-semibold">인증된 관리자</span>님</p>
                 <p className="text-sm text-gray-400">급식 순서 관리 시스템</p>
+                <p className="text-xs text-green-500">✅ 서버 사이드 JWT 인증 완료</p>
               </div>
             </div>
             <div className="space-x-4">
@@ -114,7 +184,7 @@ export default function AdminPage() {
                 onClick={handleLogout}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
               >
-                로그아웃
+                안전 로그아웃
               </button>
               <NavigationButton
                 variant="primary"
@@ -138,7 +208,7 @@ export default function AdminPage() {
           )}
 
           <div className="bg-gray-800 rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-white mb-4">빠른 작업</h2>
+            <h2 className="text-xl font-bold text-white mb-4">🛡️ 보안 강화된 관리 도구</h2>
             <div className="space-y-4">
               <button
                 onClick={() => setShowBoxManager(true)}
@@ -146,6 +216,23 @@ export default function AdminPage() {
               >
                 📦 박스 상태 관리
               </button>
+            </div>
+            
+            <div className="mt-4 text-sm text-gray-400">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-green-400">✅</span> 서버 사이드 인증
+                </div>
+                <div>
+                  <span className="text-green-400">✅</span> JWT 토큰 보안
+                </div>
+                <div>
+                  <span className="text-green-400">✅</span> HttpOnly 쿠키
+                </div>
+                <div>
+                  <span className="text-green-400">✅</span> 클라이언트 조작 방지
+                </div>
+              </div>
             </div>
           </div>
 
@@ -155,7 +242,8 @@ export default function AdminPage() {
           )}
 
           <div className="text-gray-500 text-sm text-center">
-            대전대신고등학교 급식 순서 관리 시스템 v1.0 - Simple Edition
+            대전대신고등학교 급식 순서 관리 시스템 v2.0 - Secure Edition<br/>
+            🔐 JWT + HttpOnly Cookie 보안 적용
           </div>
         </div>
       </main>
