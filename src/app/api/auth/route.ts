@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 // 서버 사이드에서만 접근 가능한 패스워드
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '53rlaehgus'
-const JWT_SECRET = process.env.JWT_SECRET || 'food_sequence_jwt_secret_2025_secure_key'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD!
+const JWT_SECRET = process.env.JWT_SECRET!
+
+if (!ADMIN_PASSWORD || !JWT_SECRET) {
+  throw new Error('환경변수 ADMIN_PASSWORD와 JWT_SECRET이 설정되지 않았습니다')
+}
 
 // 간단한 JWT 토큰 생성
 function generateToken(payload: any) {
