@@ -12,17 +12,18 @@ const handler = NextAuth({
     signIn: '/admin',
     error: '/admin/error', // 에러 페이지 추가
   },
+  debug: true, // 디버깅 활성화
   callbacks: {
     async signIn({ user, account, profile }) {
       console.log('🔐 Login attempt:', { email: user.email, name: user.name })
       
-      // 대전대신고등학교 허용 이메일 체크
-      const allowedEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || ['25_lmj0701@dshs.kr']
+      // 허용된 이메일 체크 (현재는 테스트용으로 53rlaehgus@gmail.com 허용)
+      const allowedEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || ['53rlaehgus@gmail.com']
       
       console.log('✅ Allowed emails:', allowedEmails)
       
       if (user.email && allowedEmails.includes(user.email)) {
-        console.log('✅ 대전대신고등학교 관리자 접근 허용:', user.email)
+        console.log('✅ 허용된 이메일 접근 허용:', user.email)
         return true
       }
       
