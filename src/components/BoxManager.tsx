@@ -11,10 +11,68 @@ interface BoxManagerProps {
 export default function BoxManager({ onClose }: BoxManagerProps) {
   const { boxes, statuses, updateBoxAdmin, resetAll, error } = useBoxContext()
 
-  const changeStatus = (id: string, status: BoxStatus) => {
-    console.log(`🔧 Admin changing box ${id} to ${status} via Firebase`)
-    // Firebase를 통한 관리자 전용 업데이트
+  const changeStatus = async (id: string, status: BoxStatus) => {
+    console.log(`🔧 Admin changing box ${id} to ${status} and broadcasting`)
+    
+    // 로컬 상태 즉시 업데이트
     updateBoxAdmin(id, { status })
+    
+    try {
+      // API를 통해 변경사항을 서버에 전송하고 다른 클라이언트들에게 브로드캐스트
+      const response = await fetch('/api/boxes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'update',
+          boxId: id,
+          status: status,
+          lastModified: Date.now(),
+          lastModifiedBy: 'admin'
+        })
+      })
+
+      if (!response.ok) {
+        console.error('Failed to broadcast box update')
+      } else {
+        console.log('✅ Box update broadcasted successfully')
+      }
+    } catch (error) {
+      console.error('Error broadcasting box update:', error)
+    }
+  }
+
+  const handleResetAll = async () => {
+    console.log('🔄 Admin resetting all boxes and broadcasting')
+    
+    // 로컬 상태 즉시 업데이트
+    resetAll()
+    
+    try {
+      // API를 통해 초기화를 서버에 전송하고 다른 클라이언트들에게 브로드캐스트
+      const response = await fetch('/api/boxes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'reset-all',
+          lastModified: Date.now(),
+          lastModifiedBy: 'admin'
+        })
+      })
+
+      if (!response.ok) {
+        console.error('Failed to broadcast reset all')
+      } else {
+        console.log('✅ Reset all broadcasted successfully')
+      }
+    } catch (error) {
+      console.error('Error broadcasting reset all:', error)
+    }
   }
 
   const getStatusClasses = (status: BoxStatus) => {
@@ -36,7 +94,7 @@ export default function BoxManager({ onClose }: BoxManagerProps) {
             <h2 className="text-2xl font-bold text-gray-800">박스 관리자</h2>
             <div className="space-x-2">
               <button
-                onClick={resetAll}
+                onClick={handleResetAll}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
               >
                 모두 초기화

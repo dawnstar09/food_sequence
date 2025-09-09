@@ -59,6 +59,8 @@ export async function POST(request: Request) {
     const { ADMIN_PASSWORD } = getEnvVars()
     
     console.log('🔐 Admin login attempt')
+    console.log('📝 Password received:', password ? '***' : 'null')
+    console.log('🔑 Admin password set:', ADMIN_PASSWORD ? 'YES' : 'NO')
     
     // 서버 사이드에서 패스워드 검증
     if (password === ADMIN_PASSWORD) {

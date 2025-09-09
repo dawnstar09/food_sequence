@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, ReactNode, useState, useCallback } from 'react'
+import { createContext, useContext, ReactNode, useState, useCallback, useEffect } from 'react'
 
 export type BoxStatus = 'departure' | 'waiting' | 'queue' | 'finished'
 
@@ -70,8 +70,56 @@ const statusInfo: Record<BoxStatus, StatusInfo> = {
 
 export function BoxProvider({ children }: { children: ReactNode }) {
   const [boxes, setBoxes] = useState<Box[]>(initialBoxes)
-  const [isLoading] = useState(false)
-  const [error] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // SSE 연결 설정
+  useEffect(() => {
+    console.log('🔌 Setting up SSE connection for real-time updates')
+    
+    const eventSource = new EventSource('/api/events')
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        console.log('📡 SSE message received:', data)
+        
+        if (data.type === 'box-update' && data.box) {
+          console.log('🔄 Real-time box update:', data.box)
+          setBoxes(prev => prev.map(box => 
+            box.id === data.box.id 
+              ? { ...box, ...data.box }
+              : box
+          ))
+        } else if (data.type === 'reset-all') {
+          console.log('🔄 Real-time reset all boxes')
+          setBoxes(initialBoxes.map(box => ({
+            ...box,
+            status: 'waiting' as BoxStatus,
+            lastModified: Date.now(),
+            lastModifiedBy: 'admin'
+          })))
+        }
+      } catch (err) {
+        console.error('Error parsing SSE message:', err)
+      }
+    }
+    
+    eventSource.onopen = () => {
+      console.log('✅ SSE connection established')
+      setError(null)
+    }
+    
+    eventSource.onerror = (err) => {
+      console.error('❌ SSE connection error:', err)
+      setError('실시간 연결에 문제가 발생했습니다.')
+    }
+    
+    return () => {
+      console.log('🔌 Closing SSE connection')
+      eventSource.close()
+    }
+  }, [])
 
   const updateBox = useCallback((id: string, updates: Partial<Box>) => {
     console.log(`🔄 User updating box ${id}:`, updates)
